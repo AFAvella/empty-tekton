@@ -1,20 +1,15 @@
 #!/bin/bash
 # uncomment to debug the script
-# set -x
-# copy the script below into your app code repo (e.g. ./scripts/build_image_buildkit.sh) and 'source' it from your pipeline job
-#    source ./scripts/build_image_using_buildkit.sh
+#set -x
+# copy the script below into your app code repo (e.g. ./scripts/build_image.sh) and 'source' it from your pipeline job
+#    source ./scripts/build_image.sh
 # alternatively, you can source it from online script:
-#    source <(curl -sSL "https://raw.githubusercontent.com/open-toolchain/commons/master/scripts/build_image_buildkit.sh")
+#    source <(curl -sSL "https://raw.githubusercontent.com/open-toolchain/commons/master/scripts/build_image.sh")
 # ------------------
-# source: https://raw.githubusercontent.com/open-toolchain/commons/master/scripts/build_image_buildkit.sh
-# fail the script if a command fails
-set -eo pipefail
+# source: https://raw.githubusercontent.com/open-toolchain/commons/master/scripts/build_image.sh
 
-# This script does build a Docker image into IBM Container Service private image registry using Buildkit buildctl - https://github.com/moby/buildkit#building-a-dockerfile-with-buildctl
-# Minting image tag using format: BUILD_NUMBER-BRANCH-COMMIT_ID-TIMESTAMP
-# Also copies information into a build.properties file, so they can be reused later on by other scripts (e.g. image url, chart name, ...)
-
-# Input env variables (can be received via a pipeline environment properties.file.
+# This script does build a Docker image into IBM Container Service private image registry, and copies information into
+# a build.properties file, so they can be reused later on by other scripts (e.g. image url, chart name, ...)
 echo "REGISTRY_URL=${REGISTRY_URL}"
 echo "REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}"
 echo "IMAGE_NAME=${IMAGE_NAME}"
@@ -28,29 +23,36 @@ echo "DOCKER_FILE=${DOCKER_FILE}"
 # View build properties
 if [ -f build.properties ]; then 
   echo "build.properties:"
-  cat build.properties | grep -v -i password
+  cat build.properties
 else 
   echo "build.properties : not found"
 fi 
 # also run 'env' command to find all available env variables
 # or learn more about the available environment variables at:
-# https://cloud.ibm.com/docs/services/ContinuousDelivery/pipeline_deploy_var.html#deliverypipeline_environment
+# https://console.bluemix.net/docs/services/ContinuousDelivery/pipeline_deploy_var.html#deliverypipeline_environment
 
 # To review or change build options use:
-# ibmcloud cr build --help
+# bx cr build --help
 
-# Minting image tag using format: BUILD_NUMBER-BRANCH-COMMIT_ID-TIMESTAMP
-# e.g. 3-master-50da6912-20181123114435
-# (use build number as first segment to allow image tag as a patch release name according to semantic versioning)
+echo -e "Existing images in registry"
+bx cr images
+
+# Minting image tag using format: BRANCH-BUILD_NUMBER-COMMIT_ID-TIMESTAMP
+# e.g. master-3-50da6912-20181123114435
+
 TIMESTAMP=$( date -u "+%Y%m%d%H%M%S")
 IMAGE_TAG=${TIMESTAMP}
 if [ ! -z "${GIT_COMMIT}" ]; then
   GIT_COMMIT_SHORT=$( echo ${GIT_COMMIT} | head -c 8 ) 
   IMAGE_TAG=${GIT_COMMIT_SHORT}-${IMAGE_TAG}
 fi
-if [ ! -z "${GIT_BRANCH}" ]; then IMAGE_TAG=${GIT_BRANCH}-${IMAGE_TAG} ; fi
 IMAGE_TAG=${BUILD_NUMBER}-${IMAGE_TAG}
-
+if [ ! -z "${GIT_BRANCH}" ]; then IMAGE_TAG=${GIT_BRANCH}-${IMAGE_TAG} ; fi
+echo "=========================================================="
+echo -e "BUILDING CONTAINER IMAGE: ${IMAGE_NAME}:${IMAGE_TAG}"
+if [ -z "${DOCKER_ROOT}" ]; then DOCKER_ROOT=. ; fi
+if [ -z "${DOCKER_FILE}" ]; then DOCKER_FILE=${DOCKER_ROOT}/Dockerfile ; fi
+set -x
 # Checking ig buildctl is installed
 if which buildctl > /dev/null 2>&1; then
   buildctl --version
@@ -58,30 +60,6 @@ else
   echo "Installing Buildkit builctl"
   curl -sL https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz | tar -C /tmp -xz bin/buildctl && mv /tmp/bin/buildctl /usr/bin/buildctl && rmdir --ignore-fail-on-non-empty /tmp/bin
   buildctl --version
-fi
-
-# Create the config.json file to make private container registry accessible
-export DOCKER_CONFIG=$(mktemp -d -t cr-config-XXXXXXXXXX)
-kubectl create secret --dry-run=true --output=json \
-  docker-registry registry-dockerconfig-secret \
-  --docker-server=${REGISTRY_URL} \
-  --docker-username=favella --docker-email=favella@ibm.com | \
-jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
-
-echo "=========================================================="
-echo -e "BUILDING CONTAINER IMAGE: ${IMAGE_NAME}:${IMAGE_TAG}"
-if [ -z "${DOCKER_ROOT}" ]; then DOCKER_ROOT=. ; fi
-if [ -z "${DOCKER_FILE}" ]; then DOCKER_FILE=Dockerfile ; fi
-if [ -z "$EXTRA_BUILD_ARGS" ]; then
-  echo -e ""
-else
-  for buildArg in $EXTRA_BUILD_ARGS; do
-    if [ "$buildArg" == "--build-arg" ]; then
-      echo -e ""
-    else      
-      BUILD_ARGS="${BUILD_ARGS} --opt build-arg:$buildArg"
-    fi
-  done
 fi
 set -x
 buildctl build \
@@ -91,12 +69,12 @@ buildctl build \
     --output type=image,name="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}",push=true
 set +x
 
-ibmcloud cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
+bx cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
 
 # Set PIPELINE_IMAGE_URL for subsequent jobs in stage (e.g. Vulnerability Advisor)
 export PIPELINE_IMAGE_URL="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME:$IMAGE_TAG"
 
-ibmcloud cr images --restrict ${REGISTRY_NAMESPACE}/${IMAGE_NAME}
+bx cr images --restrict ${REGISTRY_NAMESPACE}/${IMAGE_NAME}
 
 ######################################################################################
 # Copy any artifacts that will be needed for deployment and testing to $WORKSPACE    #
@@ -128,4 +106,4 @@ echo "REGISTRY_URL=${REGISTRY_URL}" >> $ARCHIVE_DIR/build.properties
 echo "REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}" >> $ARCHIVE_DIR/build.properties
 echo "GIT_BRANCH=${GIT_BRANCH}" >> $ARCHIVE_DIR/build.properties
 echo "File 'build.properties' created for passing env variables to subsequent pipeline jobs:"
-cat $ARCHIVE_DIR/build.properties | grep -v -i password
+cat $ARCHIVE_DIR/build.properties
