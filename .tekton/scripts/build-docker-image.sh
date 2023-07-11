@@ -68,7 +68,7 @@ IMAGE_TAG=${BUILD_NUMBER}-${IMAGE_TAG}
 #   --docker-password=${IBMCLOUD_API_KEY} \
 #   --docker-username=favella --docker-email=favella@ibm.com | \
 # jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
-kubectl apply --filename task-container.yaml
+kubectl apply --filename .tekton/scripts/task-container.yaml
 echo "=========================================================="
 echo -e "BUILDING CONTAINER IMAGE: ${IMAGE_NAME}:${IMAGE_TAG}"
 if [ -z "${DOCKER_ROOT}" ]; then DOCKER_ROOT=. ; fi
