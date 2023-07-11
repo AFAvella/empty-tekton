@@ -65,7 +65,6 @@ export DOCKER_CONFIG=$(mktemp -d -t cr-config-XXXXXXXXXX)
 kubectl create secret --dry-run=true --output=json \
   docker-registry registry-dockerconfig-secret \
   --docker-server=${REGISTRY_URL} \
-  --docker-password=${IBM_CLOUD_API_KEY} \
   --docker-username=favella --docker-email=favella@ibm.com | \
 jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
 
