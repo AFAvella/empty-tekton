@@ -58,7 +58,7 @@ IMAGE_TAG=${BUILD_NUMBER}-${IMAGE_TAG}
   echo "Installing Buildkit builctl"
   curl -sL https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz | tar -C /tmp -xz bin/buildctl && mv /tmp/bin/buildctl /usr/bin/buildctl && rmdir --ignore-fail-on-non-empty /tmp/bin
   buildctl --version
-fi
+#fi
 
 # Create the config.json file to make private container registry accessible
 export DOCKER_CONFIG=$(mktemp -d -t cr-config-XXXXXXXXXX)
