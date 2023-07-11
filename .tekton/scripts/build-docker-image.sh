@@ -51,24 +51,24 @@ fi
 if [ ! -z "${GIT_BRANCH}" ]; then IMAGE_TAG=${GIT_BRANCH}-${IMAGE_TAG} ; fi
 IMAGE_TAG=${BUILD_NUMBER}-${IMAGE_TAG}
 
-# # Checking ig buildctl is installed
-# #if which buildctl > /dev/null 2>&1; then
-# #  buildctl --version
-# #else 
-#   echo "Installing Buildkit builctl"
-#   curl -sL https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz | tar -C /tmp -xz bin/buildctl && mv /tmp/bin/buildctl /usr/bin/buildctl && rmdir --ignore-fail-on-non-empty /tmp/bin
-#   buildctl --version
-# #fi
+# Checking ig buildctl is installed
+#if which buildctl > /dev/null 2>&1; then
+#  buildctl --version
+#else 
+  echo "Installing Buildkit builctl"
+  curl -sL https://github.com/moby/buildkit/releases/download/v0.8.1/buildkit-v0.8.1.linux-amd64.tar.gz | tar -C /tmp -xz bin/buildctl && mv /tmp/bin/buildctl /usr/bin/buildctl && rmdir --ignore-fail-on-non-empty /tmp/bin
+  buildctl --version
+#fi
 
-# # Create the config.json file to make private container registry accessible
-# export DOCKER_CONFIG=$(mktemp -d -t cr-config-XXXXXXXXXX)
-# kubectl create secret --dry-run=true --output=json \
-#   docker-registry registry-dockerconfig-secret \
-#   --docker-server=us.io.cr \
-#   --docker-password=${IBMCLOUD_API_KEY} \
-#   --docker-username=favella --docker-email=favella@ibm.com | \
-# jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
-kubectl apply --filename .tekton/scripts/task-container.yaml
+# Create the config.json file to make private container registry accessible
+export DOCKER_CONFIG=$(mktemp -d -t cr-config-XXXXXXXXXX)
+kubectl create secret --dry-run=true --output=json \
+  docker-registry registry-dockerconfig-secret \
+  --docker-server=us.io.cr \
+  --docker-password=${IBMCLOUD_API_KEY} \
+  --docker-username=favella --docker-email=favella@ibm.com | \
+jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
+#kubectl apply --filename .tekton/scripts/task-container.yaml
 echo "=========================================================="
 echo -e "BUILDING CONTAINER IMAGE: ${IMAGE_NAME}:${IMAGE_TAG}"
 if [ -z "${DOCKER_ROOT}" ]; then DOCKER_ROOT=. ; fi
