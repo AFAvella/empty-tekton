@@ -91,6 +91,8 @@ buildctl build \
     --import-cache type=registry,ref=${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME} \
     --output type=image,name="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}",push=true
 set +x
+docker buildx create --config /home/rami/workspace/gaia/buildkitd.toml  --name myconfbuilder4
+docker buildx use myconfbuilder4
 
 ibmcloud cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
 
