@@ -147,7 +147,7 @@ spec:
         - name: secure-properties
           mountPath: /cd-config/secure-properties
   sidecars:
-    - image: moby/buildkit:v0.8.1
+    - image: "moby/buildkit:v0.8.1"
       name: server
       securityContext:
         privileged: true
