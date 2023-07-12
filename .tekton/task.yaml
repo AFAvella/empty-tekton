@@ -121,11 +121,8 @@ spec:
         privileged: true
       command: ["/bin/bash", "-c"]
       args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
-          export GIT_COMMIT=$(git rev-parse HEAD);
-          export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
+      args:
+        - |
           if [ $PIPELINE_DEBUG == 1 ]; then
               pwd
               env
@@ -195,6 +192,16 @@ spec:
           # --output type=oci,dest=/builder/home/image-outputs/built-image/output.tar \
           # It is possible to assign multiple tags to the image with latest version of buildkit-image
           # see https://github.com/moby/buildkit/issues/797
+
+      volumeMounts:
+        - mountPath: /steps
+          name: steps-volume
+        - name: cd-config-volume
+          mountPath: /cd-config
+        - name: environment-properties
+          mountPath: /cd-config/environment-properties
+        - name: secure-properties
+          mountPath: /cd-config/secure-properties
   sidecars:
     - image: $(params.buildkit-image)
       name: server
