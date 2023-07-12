@@ -92,7 +92,7 @@ buildctl --addr tcp://0.0.0.0:1234 build \
   ${BUILD_ARGS} \
   --local context=/artifacts/. \
   --local dockerfile= ./Dockerfile \
-  --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=true" \
+  #--exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=true" \
   --export-cache type=inline \
   --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
 set +x
