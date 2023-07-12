@@ -121,7 +121,6 @@ spec:
         privileged: true
       command: ["/bin/bash", "-c"]
       args:
-      args:
         - |
           if [ $PIPELINE_DEBUG == 1 ]; then
               pwd
@@ -132,7 +131,6 @@ spec:
 
           source /steps/next-step-env.properties
           export $(cut -d= -f1 /steps/next-step-env.properties)
-
 
           # Send stdout to the tags list; don't touch stderr.
           /steps/additionalTags.sh > /steps/tags.lst
