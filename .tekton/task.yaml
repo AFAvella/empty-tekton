@@ -51,6 +51,7 @@ spec:
           cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
     - name: pre-build-check
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
+      workingDir: /steps
       env:
         - name: IBMCLOUD_API_KEY
           value: $(params.apikey)
