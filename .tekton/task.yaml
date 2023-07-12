@@ -86,7 +86,7 @@ spec:
           export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
           export GIT_COMMIT=$(git rev-parse HEAD);
           export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
-          cd /workspace && source .tekton/scripts/build-docker-image.sh;
+          source .tekton/scripts/build-docker-image.sh;
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
