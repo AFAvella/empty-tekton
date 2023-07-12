@@ -62,7 +62,7 @@ spec:
           export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
           cd /workspace && source .tekton/scripts/pre-build-check.sh;
     - name: build-docker-image
-      image: $(params.buildkit-image)
+      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
       workingDir: $(workspaces.task-pvc.path)
       env:
         - name: IBMCLOUD_API_KEY
