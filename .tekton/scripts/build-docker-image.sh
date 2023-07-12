@@ -9,12 +9,6 @@ echo "GIT_COMMIT=${GIT_COMMIT}"
 echo "DOCKER_ROOT=${DOCKER_ROOT}"
 echo "DOCKER_FILE=${DOCKER_FILE}"
 #Pedazo código nuevo
-if [ $PIPELINE_DEBUG == 1 ]; then
-  pwd
-  env
-  trap env EXIT
-  set -x
-fi
 
 source /steps/next-step-env.properties
 export $(cut -d= -f1 /steps/next-step-env.properties)
