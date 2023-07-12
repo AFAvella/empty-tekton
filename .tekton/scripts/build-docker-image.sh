@@ -90,7 +90,7 @@ buildctl --addr tcp://0.0.0.0:1234 build \
   --frontend=dockerfile.v0 \
   --opt filename=Dockerfile \
   ${BUILD_ARGS} \
-  --local context=$(workspaces.task-pvc.path)/$(params.path-to-context) \
+  --local context=/artifacts/. \
   --local dockerfile= ./Dockerfile \
   --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=$(params.push-to-registry)" \
   --export-cache type=inline \
