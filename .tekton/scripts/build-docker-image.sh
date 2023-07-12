@@ -91,7 +91,7 @@ buildctl --addr tcp://0.0.0.0:1234 build \
   --opt filename=$(params.dockerfile) \
   ${BUILD_ARGS} \
   --local context=$(workspaces.task-pvc.path)/$(params.path-to-context) \
-  --local dockerfile=$(workspaces.task-pvc.path)/$(params.path-to-dockerfile) \
+  --local dockerfile= ./Dockerfile \
   --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=$(params.push-to-registry)" \
   --export-cache type=inline \
   --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
