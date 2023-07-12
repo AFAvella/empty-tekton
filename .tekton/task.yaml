@@ -126,17 +126,12 @@ spec:
           export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
           export GIT_COMMIT=$(git rev-parse HEAD);
           export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
-          # Input env variables (can be received via a pipeline environment properties.file.
-          echo "REGISTRY_URL=${REGISTRY_URL}"
-          echo "REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}"
-          echo "IMAGE_NAME=${IMAGE_NAME}"
-          echo "BUILD_NUMBER=${BUILD_NUMBER}"
-          echo "ARCHIVE_DIR=${ARCHIVE_DIR}"
-          echo "GIT_BRANCH=${GIT_BRANCH}"
-          echo "GIT_COMMIT=${GIT_COMMIT}"
-          echo "DOCKER_ROOT=${DOCKER_ROOT}"
-          echo "DOCKER_FILE=${DOCKER_FILE}"
-          #Pedazo código nuevo
+          if [ $PIPELINE_DEBUG == 1 ]; then
+              pwd
+              env
+              trap env EXIT
+              set -x
+          fi
 
           source /steps/next-step-env.properties
           export $(cut -d= -f1 /steps/next-step-env.properties)
@@ -171,26 +166,26 @@ spec:
           echo "#######################"
           BUILDKIT_IMAGE_NAMES=$(tr -s '\r\n' ',' < /steps/tags.lst | sed -e 's/,$/\n/')
           if [ -z "$BUILDKIT_IMAGE_NAMES" ]; then
-          # Set default image name for buildkit to push
-          BUILDKIT_IMAGE_NAMES="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
+            # Set default image name for buildkit to push
+            BUILDKIT_IMAGE_NAMES="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
           fi
           echo "Buildkit Image names: $BUILDKIT_IMAGE_NAMES"
 
           BUILD_ARG_LIST='$(params.build-args)'
           for buildArg in $BUILD_ARG_LIST; do
-          BUILD_ARGS="${BUILD_ARGS} --opt build-arg:$buildArg "
+            BUILD_ARGS="${BUILD_ARGS} --opt build-arg:$buildArg "
           done
 
           buildctl --addr tcp://0.0.0.0:1234 build \
-          --progress=plain \
-          --frontend=dockerfile.v0 \
-          --opt filename=$(params.dockerfile) \
-          ${BUILD_ARGS} \
-          --local context=$(workspaces.source.path)/$(params.path-to-context) \
-          --local dockerfile=$(workspaces.source.path)/$(params.path-to-dockerfile) \
-          --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=$(params.push-to-registry)" \
-          --export-cache type=inline \
-          --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
+            --progress=plain \
+            --frontend=dockerfile.v0 \
+            --opt filename=$(params.dockerfile) \
+            ${BUILD_ARGS} \
+            --local context=$(workspaces.source.path)/$(params.path-to-context) \
+            --local dockerfile=$(workspaces.source.path)/$(params.path-to-dockerfile) \
+            --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=$(params.push-to-registry)" \
+            --export-cache type=inline \
+            --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
 
           # Using the deprecated --exporter option for now as the multiple name/tags using --output option
           # is not working as expected: https://github.com/moby/buildkit/issues/797#issuecomment-581346240
