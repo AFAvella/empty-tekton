@@ -9,82 +9,30 @@ spec:
     - name: revision
       description: the revision
       default: master
-    - name: api
-      description: the ibmcloud api
-      default: https://cloud.ibm.com
-    - name: continuous-delivery-context-secret
-      description: Name of the secret containing the continuous delivery pipeline context secrets
-      default: secure-properties
     - name: apikey
-      description: field in the secret that contains the api key used to login to ibmcloud container registry
-      default: apikey
-    - name: resource-group
-      description: target resource group (name or id) for the ibmcloud login operation
-      default: ""
-    - name: image-url
-      description: |
-        url of the image to build
-        required if no image pipeline resource provided or no registry region, namespace and image name parameters
-        are provided to this task
-      default: ""
-    - name: registryRegion
-      description: container registry region id. required if no image-url or no image pipeline resources provided
-      default: ""
+      description: the ibmcloud api key
+    - name: api
+      description: the ibmcloud api endpoint
+      default: https://cloud.ibm.com
     - name: registryNamespace
-      description: container registry namespace. required if no image-url or no image pipeline resources provided
-      default: ""
-    - name: registry-create-namespace
-      description: create container registry namespace if it doesn't already exists
-      default: "true"
+      description: the ibmcloud registry namespace
     - name: imageName
-      description: image name. required if no image-url or no image pipeline resources provided
+      description: the base image name
       default: "angulist-app"
+    - name: registryRegion
+      description: the ibmcloud registry region
+    - name: buildkit-image
+      description: The name of the BuildKit image
+      default: "moby/buildkit:v0.8.1"
     - name: path-to-context
       description: the path to the context that is used for the build (default to `.` meaning current directory)
       default: .
     - name: path-to-dockerfile
       description: the path to the Dockerfile that is used for the build (default to `.` meaning current directory)
       default: .
-    - name: dockerfile
-      description: The name of the Dockerfile
-      default: "Dockerfile"
-    - name: build-args
-      description: build argument list in the format 'KEY=VALUE' with a key-value pair per line.
-      default: ""
-    - name: buildkit-image
-      description: The name of the BuildKit image
-      default: "moby/buildkit:v0.8.1"
     - name: push-to-registry
       description: option to push the built image to registry or not. Default is `true`
       default: "true"
-    - name: check-step-image
-      description: image to use for the check (pre-build) step (default to icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.11)
-      default: "icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.11"
-    - name: process-log-step-image
-      description: image to use for the process log (post-build) steps (default to icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.11)
-      default: "icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.11"
-    - name: additional-tags
-      description: comma-separated list of additional-tags
-      # can not be defined as an array because of variable substition error for array
-      # https://github.com/tektoncd/pipeline/commit/86deacb04536f0f3e7176c6664cec8786678ed18
-      default: ""
-    - name: additional-tags-script
-      description: Shell script that allows to add tags for the image to be build.
-      default: ""
-    - name: properties-file
-      description: file containing properties out of containerize task
-      default: build.properties
-    - name: pipeline-debug
-      description: Pipeline debug mode. Value can be 0 or 1. Default to 0
-      default: "0"
-    - name: deployment-file
-      default: deployment.yml
-    - name: clusterNamespace
-      default: production
-    - name: cluster
-      description: The IBM Cloud Kubernetes cluster name
-    - name: clusterRegion
-      description: The IBM Cloud Kubernetes cluster region
   workspaces:
   - name: task-pvc
     mountPath: /artifacts   

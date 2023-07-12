@@ -88,7 +88,7 @@ set -x
 buildctl --addr tcp://0.0.0.0:1234 build \
   --progress=plain \
   --frontend=dockerfile.v0 \
-  --opt filename=$(params.dockerfile) \
+  --opt filename=Dockerfile \
   ${BUILD_ARGS} \
   --local context=$(workspaces.task-pvc.path)/$(params.path-to-context) \
   --local dockerfile= ./Dockerfile \
