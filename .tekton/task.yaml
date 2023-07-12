@@ -130,6 +130,11 @@ spec:
         privileged: true
       command: ["/bin/bash", "-c"]
       args:
+        - set -e -o pipefail;
+          ibmcloud login -a $API -r $REGION;
+          export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
+          export GIT_COMMIT=$(git rev-parse HEAD);
+          export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
         - |
           # Input env variables (can be received via a pipeline environment properties.file.
             echo "REGISTRY_URL=${REGISTRY_URL}"
@@ -202,7 +207,6 @@ spec:
             --exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=$(params.push-to-registry)" \
             --export-cache type=inline \
             --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
-
       volumeMounts:
         - mountPath: /steps
           name: steps-volume
