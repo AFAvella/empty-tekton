@@ -1,3 +1,5 @@
+#Version actualizada.
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -9,65 +11,13 @@ spec:
     - name: revision
       description: the revision
       default: master
-    - name: apikey
-      description: the ibmcloud api key
     - name: api
-      description: the ibmcloud api endpoint
-      default: "https://cloud.ibm.com"
-    - name: registryNamespace
-      description: the ibmcloud registry namespace
-    - name: imageName
-      description: the base image name
-      default: "angulist-app"
-    - name: registryRegion
-      description: the ibmcloud registry region
-  workspaces:
-  - name: task-pvc
-    mountPath: /artifacts   
-  steps:
-    - name: clone-repo
-      image: alpine/git
-      env:
-        - name: REPOSITORY
-          value: $(params.repository)
-        - name: REVISION
-          value: $(params.revision)
-      command: ["/bin/sh", "-c"]
-      args:
-        - set -e -o pipefail;
-          echo "Cloning $REPOSITORY";
-          cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
-    - name: pre-build-check
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: REGION
-          value: $(params.registryRegion)
-        - name: HOME
-          value: "/root"
-        - name: REGISTRY_NAMESPACE
-          value: $(params.registryNamespace)
-        - name: IMAGE_NAME
-          value: $(params.imageName)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
-          cd /workspace && source .tekton/scripts/pre-build-check.sh;
-    name: icr-containerize
-spec:
-  params:
-    - name: ibmcloud-api
       description: the ibmcloud api
       default: https://cloud.ibm.com
     - name: continuous-delivery-context-secret
       description: Name of the secret containing the continuous delivery pipeline context secrets
       default: secure-properties
-    - name: container-registry-apikey-secret-key
+    - name: apikey
       description: field in the secret that contains the api key used to login to ibmcloud container registry
       default: apikey
     - name: resource-group
@@ -79,18 +29,18 @@ spec:
         required if no image pipeline resource provided or no registry region, namespace and image name parameters
         are provided to this task
       default: ""
-    - name: registry-region
+    - name: registryRegion
       description: container registry region id. required if no image-url or no image pipeline resources provided
       default: ""
-    - name: registry-namespace
+    - name: registryNamespace
       description: container registry namespace. required if no image-url or no image pipeline resources provided
       default: ""
     - name: registry-create-namespace
       description: create container registry namespace if it doesn't already exists
       default: "true"
-    - name: image-name
+    - name: imageName
       description: image name. required if no image-url or no image pipeline resources provided
-      default: ""
+      default: "angulist-app"
     - name: path-to-context
       description: the path to the context that is used for the build (default to `.` meaning current directory)
       default: .
@@ -129,6 +79,14 @@ spec:
     - name: pipeline-debug
       description: Pipeline debug mode. Value can be 0 or 1. Default to 0
       default: "0"
+    - name: deployment-file
+      default: deployment.yml
+    - name: clusterNamespace
+      default: production
+    - name: cluster
+      description: The IBM Cloud Kubernetes cluster name
+    - name: clusterRegion
+      description: The IBM Cloud Kubernetes cluster region
   results:
     - name: image-repository
       description: the repository for the built image
@@ -137,7 +95,7 @@ spec:
     - name: image-digest
       description: the image digest (sha-256 hash) for the built image
   workspaces:
-    - name: source
+    - name: task-pvc
       description: A workspace containing the source (Dockerfile, Docker context) to create the image
       mountPath: /artifacts
   resources:
@@ -151,25 +109,46 @@ spec:
       - name: PIPELINE_DEBUG
         value: $(params.pipeline-debug)
   steps:
+    - name: clone-repo
+      image: alpine/git
+      env:
+        - name: REPOSITORY
+          value: $(params.repository)
+        - name: REVISION
+          value: $(params.revision)
+      command: ["/bin/sh", "-c"]
+      args:
+        - set -e -o pipefail;
+          echo "Cloning $REPOSITORY";
+          cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
     - name: check-registry
       image: $(params.check-step-image)
       workingDir: /steps
       env:
-        - name: API_KEY
+        - name: IBMCLOUD_API_KEY
           valueFrom:
             secretKeyRef:
               name: $(params.continuous-delivery-context-secret)
-              key: $(params.container-registry-apikey-secret-key)
-        - name: IBMCLOUD_API
-          value: $(params.ibmcloud-api)
+              key: $(params.apikey)
+        - name: API
+          value: $(params.api)
         - name: IBMCLOUD_RESOURCE_GROUP
           value: $(params.resource-group)
-        - name: REGISTRY_CREATE_NAMESPACE
-          value: $(params.registry-create-namespace)
+        - name: REGION
+          value: $(params.registryRegion)
+        - name: HOME
+          value: "/root"
+        - name: REGISTRY_NAMESPACE
+          value: $(params.registryNamespace)
+        - name: IMAGE_NAME
+          value: $(params.imageName)
       command: ["/bin/bash", "-c"]
       args:
         - |
           set -e -o pipefail
+          ibmcloud login -a $API -r $REGION;
+          export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
+          cd /workspace && source .tekton/scripts/pre-build-check.sh;
 
           if [ $PIPELINE_DEBUG == 1 ]; then
               pwd
@@ -197,13 +176,13 @@ spec:
           else
             # export the expected environment variables based on the required registry parameters
             # if registry region is in the 'ibm:yp:<region>' just keep the region part
-            export REGISTRY_REGION=$(echo "$(params.registry-region)" | awk -F ':' '{print $NF;}')
+            export REGISTRY_REGION=$(echo "$(params.registryRegion)" | awk -F ':' '{print $NF;}')
 
             if [ -z "$REGISTRY_REGION" ]; then
               echo "No registry region provided"
               exit 1
             fi
-            export REGISTRY_NAMESPACE=$(params.registry-namespace)
+            export REGISTRY_NAMESPACE=$(params.registryNamespace)
             if [ -z "$REGISTRY_NAMESPACE" ]; then
               echo "No registry namespace provided"
               exit 1
@@ -214,7 +193,7 @@ spec:
           source /scripts/check_registry.sh
 
           if [ -z "$IMAGE_RESOURCE_URL" ]; then
-            export IMAGE_NAME=$(params.image-name)
+            export IMAGE_NAME=$(params.imageName)
             if [ -z "$IMAGE_NAME" ]; then
               echo "No image name provided"
               exit 1
@@ -496,182 +475,3 @@ spec:
     - name: secure-properties
       secret:
         secretName: secure-properties
-    # - name: build-docker-image
-    #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-    #   env:
-    #     - name: IBMCLOUD_API_KEY
-    #       value: $(params.apikey)
-    #     - name: API
-    #       value: $(params.api)
-    #     - name: REGION
-    #       value: $(params.registryRegion)
-    #     - name: HOME
-    #       value: "/root"
-    #     - name: REGISTRY_NAMESPACE
-    #       value: $(params.registryNamespace)
-    #     - name: IMAGE_NAME
-    #       value: $(params.imageName)
-    #     - name: ARCHIVE_DIR
-    #       value: "/artifacts"
-    #     - name: BUILD_NUMBER
-    #       value: "0"
-    #     - name: GIT_BRANCH
-    #       value: $(params.revision)
-    #   command: ["/bin/bash", "-c"]
-    #   args:
-    #     - set -e -o pipefail;
-    #       ibmcloud login -a $API -r $REGION;
-    #       export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
-    #       export GIT_COMMIT=$(git rev-parse HEAD);
-    #       export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
-    #       cd /workspace && source .tekton/scripts/build-docker-image.sh;
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: validate-task
-spec:
-  params:
-    - name: repository
-      description: the git repo
-    - name: revision
-      description: the revision
-      default: master
-    - name: apikey
-      description: the ibmcloud api key
-    - name: api
-      description: the ibmcloud api endpoint
-      default: "https://cloud.ibm.com"
-    - name: registryRegion
-      description: the ibmcloud registry region   
-  workspaces:
-  - name: task-pvc
-    mountPath: /artifacts         
-  steps:
-    - name: clone-repo
-      image: alpine/git
-      env:
-        - name: REPOSITORY
-          value: $(params.repository)
-        - name: REVISION
-          value: $(params.revision)
-      command: ["/bin/sh", "-c"]
-      args:
-        - set -e -o pipefail;
-          echo "Cloning $REPOSITORY";
-          cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
-    - name: check-vulnerabilities
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: HOME
-          value: "/root"
-        - name: REGION
-          value: $(params.registryRegion)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          while read line; do export $line; done < /artifacts/build.properties;
-          cp /artifacts/build.properties .;
-          cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: deploy-task
-spec:
-  params:
-    - name: repository
-      description: the git repo
-    - name: revision
-      description: the revision
-      default: master
-    - name: apikey
-      description: the ibmcloud api key
-    - name: api
-      description: the ibmcloud api endpoint
-      default: "https://cloud.ibm.com"
-    - name: deployment-file
-      default: deployment.yml
-    - name: clusterNamespace
-      default: production
-    - name: cluster
-      description: The IBM Cloud Kubernetes cluster name
-    - name: clusterRegion
-      description: The IBM Cloud Kubernetes cluster region
-  workspaces:
-  - name: task-pvc
-    mountPath: /artifacts  
-  steps:
-    - name: clone-repo
-      image: alpine/git
-      env:
-        - name: REPOSITORY
-          value: $(params.repository)
-        - name: REVISION
-          value: $(params.revision)
-      command: ["/bin/sh", "-c"]
-      args:
-        - set -e -o pipefail;
-          echo "Cloning $REPOSITORY";
-          cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
-    - name: pre-deploy-check
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: REGION
-          value: $(params.clusterRegion)
-        - name: HOME
-          value: "/root"
-        - name: DEPLOYMENT_FILE
-          value: $(params.deployment-file)
-        - name: CLUSTER_NAMESPACE
-          value: $(params.clusterNamespace)
-        - name: PIPELINE_KUBERNETES_CLUSTER_NAME
-          value: $(params.cluster)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          cd /workspace;
-          export IKS_BETA_VERSION=1;
-          ibmcloud ks cluster config -c "${PIPELINE_KUBERNETES_CLUSTER_NAME}";
-          if which oc > /dev/null && ibmcloud ks cluster get -c "${PIPELINE_KUBERNETES_CLUSTER_NAME}" --json | jq -e '.type=="openshift"' > /dev/null; then oc login -u apikey -p "${IBMCLOUD_API_KEY}" ; fi;
-          while read line; do export $line; done < /artifacts/build.properties;
-          cp /artifacts/build.properties .;
-          cd /workspace && source .tekton/scripts/pre-deploy-check.sh;
-    - name: deploy-to-kubernetes
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: REGION
-          value: $(params.clusterRegion)
-        - name: HOME
-          value: "/root"
-        - name: DEPLOYMENT_FILE
-          value: $(params.deployment-file)
-        - name: CLUSTER_NAMESPACE
-          value: $(params.clusterNamespace)
-        - name: PIPELINE_KUBERNETES_CLUSTER_NAME
-          value: $(params.cluster)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          export IKS_BETA_VERSION=1;
-          ibmcloud ks cluster config -c "${PIPELINE_KUBERNETES_CLUSTER_NAME}";
-          if which oc > /dev/null && ibmcloud ks cluster get -c "${PIPELINE_KUBERNETES_CLUSTER_NAME}" --json | jq -e '.type=="openshift"' > /dev/null; then oc login -u apikey -p "${IBMCLOUD_API_KEY}" ; fi;
-          while read line; do export $line; done < /artifacts/build.properties;
-          cp /artifacts/build.properties .;
-          cd /workspace && source .tekton/scripts/deploy-to-kubernetes.sh;
-      
