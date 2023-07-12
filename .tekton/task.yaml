@@ -160,6 +160,9 @@ spec:
            mkfs.ext4 /tmp/disk.img &&
            mount /tmp/disk.img /var/lib/buildkit; fi && buildkitd --addr tcp://0.0.0.0:1234;
       # Wait for the buildkit daemon to have available workers.
+  volumes:
+    - name: steps-volume
+      emptyDir: {}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
