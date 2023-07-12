@@ -139,12 +139,6 @@ spec:
       volumeMounts:
         - mountPath: /steps
           name: steps-volume
-        - name: cd-config-volume
-          mountPath: /cd-config
-        - name: environment-properties
-          mountPath: /cd-config/environment-properties
-        - name: secure-properties
-          mountPath: /cd-config/secure-properties
   sidecars:
     - image: "moby/buildkit:v0.8.1"
       name: server
