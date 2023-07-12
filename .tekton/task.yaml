@@ -31,7 +31,7 @@ spec:
       description: the path to the Dockerfile that is used for the build (default to `.` meaning current directory)
       default: .
     - name: push-to-registry
-      description: option to push the built image to registry or not. Default is `true`
+      description: option to push the built ima<sge to registry or not. Default is `true`
       default: "true"
   workspaces:
   - name: task-pvc
