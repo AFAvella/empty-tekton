@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: angulist-app
-          image: favella/angulist-app:1.0.0
+          image: /tekton-handson/angulist-app
           ports:
             - containerPort: 80
 ---
