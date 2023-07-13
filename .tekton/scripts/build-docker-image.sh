@@ -94,7 +94,7 @@ buildctl --addr tcp://0.0.0.0:1234 build \
   --local dockerfile= ./Dockerfile \
   #--exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=true" \
   --export-cache type=inline \
-  --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
+  --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log, push=true
 set +x
 docker buildx create --config /home/rami/workspace/gaia/buildkitd.toml  --name myconfbuilder4
 docker buildx use myconfbuilder4
