@@ -131,6 +131,7 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |
+          ibmcloud login -a $API -r $REGION
           # Input env variables (can be received via a pipeline environment properties.file.
           echo "REGISTRY_URL=${REGISTRY_URL}"
           echo "REGISTRY_NAMESPACE=${REGISTRY_NAMESPACE}"
@@ -183,7 +184,7 @@ spec:
             docker-registry registry-dockerconfig-secret \
             --docker-server=us.io.cr \
             --docker-password=${IBMCLOUD_API_KEY} \
-            --docker-username=iamapikey --docker-email=favella@ibm.com | \
+            --docker-username=favella --docker-email=favella@ibm.com | \
           jq -r '.data[".dockerconfigjson"]' | base64 -d > ${DOCKER_CONFIG}/config.json
 
           echo "=========================================================="
@@ -266,7 +267,6 @@ spec:
           echo "File 'build.properties' created for passing env variables to subsequent pipeline jobs:"
           cat $ARCHIVE_DIR/build.properties | grep -v -i password;
         - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
           export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
           export GIT_COMMIT=$(git rev-parse HEAD);
           export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
