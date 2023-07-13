@@ -14,9 +14,9 @@ spec:
     spec:
       containers:
         - name: angulist-app
-          image: "us.icr.io/tekton-handson/angulist-app"
+          image: us.icr.io/diego-cr-test/test-cr-helloworld
           ports:
-            - containerPort: 90
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
