@@ -148,18 +148,18 @@ spec:
           export GIT_COMMIT=$(git rev-parse HEAD);
           export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
           cd /workspace && source .tekton/scripts/build-docker-image.sh;
-    - name: clone-repo
-      image: alpine/git
-      env:
-        - name: REPOSITORY
-          value: $(params.repository)
-        - name: REVISION
-          value: $(params.revision)
-      command: ["/bin/sh", "-c"]
-      args:
-        - set -e -o pipefail;
-          echo "Cloning $REPOSITORY";
-          cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
+    # - name: clone-repo
+    #   image: alpine/git
+    #   env:
+    #     - name: REPOSITORY
+    #       value: $(params.repository)
+    #     - name: REVISION
+    #       value: $(params.revision)
+    #   command: ["/bin/sh", "-c"]
+    #   args:
+    #     - set -e -o pipefail;
+    #       echo "Cloning $REPOSITORY";
+    #       cd /workspace && git clone -q -b $REVISION $REPOSITORY .;
     - name: check-vulnerabilities
       image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
       env:
