@@ -61,7 +61,7 @@ fi
 # reference https://console.bluemix.net/docs/containers/cs_cluster.html#bx_registry_other
 echo "=========================================================="
 echo -e "CONFIGURING ACCESS to private image registry from namespace ${CLUSTER_NAMESPACE}"
-IMAGE_PULL_SECRET_NAME="ibmcloud-toolchain-${PIPELINE_TOOLCHAIN_ID}-${REGISTRY_URL}"
+IMAGE_PULL_SECRET_NAME="ibmcloud-toolchain-test-us.io.cr"
 
 echo -e "Checking for presence of ${IMAGE_PULL_SECRET_NAME} imagePullSecret for this toolchain"
 if ! kubectl get secret ${IMAGE_PULL_SECRET_NAME} --namespace ${CLUSTER_NAMESPACE}; then
