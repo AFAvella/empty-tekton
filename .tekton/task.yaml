@@ -148,27 +148,27 @@ spec:
           export GIT_COMMIT=$(git rev-parse HEAD);
           export REGISTRY_URL=$(ibmcloud cr info | sed "2q;d" | awk '{for(i=1;i<=NF;i++) if ($i=="Registry") print $(i+1)}');
           cd /workspace && source .tekton/scripts/build-docker-image.sh;
-    - name: check-vulnerabilities
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: HOME
-          value: "/root"
-        - name: REGION
-          value: $(params.registryRegion)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          while read line; do export $line; done < /artifacts/build.properties;
-          cp /artifacts/build.properties .;
-          cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
-      volumeMounts:
-        - mountPath: /steps
-          name: steps-volume
+    # - name: check-vulnerabilities
+    #   image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
+    #   env:
+    #     - name: IBMCLOUD_API_KEY
+    #       value: $(params.apikey)
+    #     - name: API
+    #       value: $(params.api)
+    #     - name: HOME
+    #       value: "/root"
+    #     - name: REGION
+    #       value: $(params.registryRegion)
+    #   command: ["/bin/bash", "-c"]
+    #   args:
+    #     - set -e -o pipefail;
+    #       ibmcloud login -a $API -r $REGION;
+    #       while read line; do export $line; done < /artifacts/build.properties;
+    #       cp /artifacts/build.properties .;
+    #       cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
+    #   volumeMounts:
+    #     - mountPath: /steps
+    #       name: steps-volume
   sidecars:
     - image: "moby/buildkit:v0.8.1"
       name: server
