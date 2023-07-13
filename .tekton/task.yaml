@@ -131,7 +131,6 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         |
-        - set -e
           BUILDKIT_IMAGE_NAMES=$(tr -s '\r\n' ',' < /steps/tags.lst | sed -e 's/,$/\n/')
           if [ -z "$BUILDKIT_IMAGE_NAMES" ]; then
           # Set default image name for buildkit to push
