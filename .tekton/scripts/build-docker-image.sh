@@ -85,7 +85,7 @@ else
   done
 fi
 set -x
-buildctl --addr tcp://0.0.0.0:1234 build \
+buildctl --addr tcp://localhost:1234 build \
   --progress=plain \
   --frontend=dockerfile.v0 \
   --opt filename=Dockerfile \
@@ -97,8 +97,6 @@ buildctl --addr tcp://0.0.0.0:1234 build \
   --export-cache type=inline \
   --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log, push=true
 set +x
-docker buildx create --config /home/rami/workspace/gaia/buildkitd.toml  --name myconfbuilder4
-docker buildx use myconfbuilder4
 
 ibmcloud cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
 
