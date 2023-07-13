@@ -221,7 +221,7 @@ spec:
           if [ -f /artifacts/build.properties ]; then
             while read line; do export $line; done < /artifacts/build.properties;
             cp /artifacts/build.properties .;
-          fi
+          fi;
           cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
 ---
 apiVersion: tekton.dev/v1beta1
