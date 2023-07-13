@@ -151,24 +151,6 @@ spec:
       volumeMounts:
         - mountPath: /steps
           name: steps-volume
-    - name: check-vulnerabilities
-      image: icr.io/continuous-delivery/pipeline/pipeline-base-ubi:3.2
-      env:
-        - name: IBMCLOUD_API_KEY
-          value: $(params.apikey)
-        - name: API
-          value: $(params.api)
-        - name: HOME
-          value: "/root"
-        - name: REGION
-          value: $(params.registryRegion)
-      command: ["/bin/bash", "-c"]
-      args:
-        - set -e -o pipefail;
-          ibmcloud login -a $API -r $REGION;
-          while read line; do export $line; done < /artifacts/build.properties;
-          cp /artifacts/build.properties .;
-          cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
   sidecars:
     - image: "moby/buildkit:v0.8.1"
       name: server
@@ -236,6 +218,10 @@ spec:
       args:
         - set -e -o pipefail;
           ibmcloud login -a $API -r $REGION;
+          if [ -f /artifacts/build.properties ]; then
+            while read line; do export $line; done < /artifacts/build.properties;
+            cp /artifacts/build.properties .;
+          fi
           while read line; do export $line; done < /artifacts/build.properties;
           cp /artifacts/build.properties .;
           cd /workspace && source .tekton/scripts/check-vulnerabilities.sh || true;
