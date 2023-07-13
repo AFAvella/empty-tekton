@@ -93,10 +93,10 @@ buildctl --addr tcp://localhost:1234 build \
   --local context=/artifacts/. \
   --local dockerfile= ./Dockerfile \
   #--exporter=image --exporter-opt "name=$BUILDKIT_IMAGE_NAMES" --exporter-opt "push=true" \
-  --output type=image,"name=us.icr.io/tekton-handson/angulist-app:1.0.0",push=true
+  --output type=image,"name=us.icr.io/tekton-handson/angulist-app:1.0.0",push=true \
   #--output type=image,name=$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME:tag1,name=username/image:tag2,push=true
   --export-cache type=inline \
-  --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log, push=true
+  --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
 set +x
 
 ibmcloud cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
