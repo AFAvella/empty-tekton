@@ -85,6 +85,17 @@ else
   done
 fi
 set -x
+BUILDKIT_IMAGE_NAMES=$(tr -s '\r\n' ',' < /steps/tags.lst | sed -e 's/,$/\n/')
+if [ -z "$BUILDKIT_IMAGE_NAMES" ]; then
+  # Set default image name for buildkit to push
+  BUILDKIT_IMAGE_NAMES="$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME"
+fi
+echo "Buildkit Image names: $BUILDKIT_IMAGE_NAMES"
+
+BUILD_ARG_LIST=''
+for buildArg in $BUILD_ARG_LIST; do
+  BUILD_ARGS="${BUILD_ARGS} --opt build-arg:$buildArg "
+done
 buildctl --addr tcp://0.0.0.0:1234 build \
   --progress=plain \
   --frontend=dockerfile.v0 \
