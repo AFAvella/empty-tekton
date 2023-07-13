@@ -1,6 +1,6 @@
 #!/bin/bash
 # uncomment to debug the script
-# set -x
+ set -x
 # copy the script below into your app code repo (e.g. ./scripts/build_image_buildkit.sh) and 'source' it from your pipeline job
 #    source ./scripts/build_image_using_buildkit.sh
 # alternatively, you can source it from online script:
@@ -84,7 +84,7 @@ else
     fi
   done
 fi
-set -x
+#set -x
 buildctl --addr tcp://localhost:1234 build \
   --progress=plain \
   --frontend=dockerfile.v0 \
@@ -97,7 +97,7 @@ buildctl --addr tcp://localhost:1234 build \
   #--output type=image,name=$REGISTRY_URL/$REGISTRY_NAMESPACE/$IMAGE_NAME:tag1,name=username/image:tag2,push=true
   --export-cache type=inline \
   --import-cache type=registry,ref=$IMAGE_REPOSITORY 2>&1 | tee /steps/build.log
-set +x
+#set +x
 
 ibmcloud cr image-inspect ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}
 
